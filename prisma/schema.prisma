@@ -141,6 +141,14 @@ model FuelLog {
   trip    Trip?   @relation(fields: [tripId], references: [id])
 }
 
+// Singleton app configuration (one row, id = "app"). General settings tab.
+model AppSettings {
+  id           String @id @default("app")
+  depotName    String @default("Gandhinagar Depot GJ-14")
+  currency     String @default("INR")
+  distanceUnit String @default("km")
+}
+
 model Expense {
   id        String          @id @default(cuid())
   vehicleId String
