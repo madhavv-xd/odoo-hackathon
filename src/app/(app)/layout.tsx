@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { Sidebar } from "@/components/app/sidebar";
 import { Topbar } from "@/components/app/topbar";
+import { CopilotSheet } from "@/components/app/copilot-sheet";
 
 export default async function AppLayout({
   children,
@@ -18,6 +19,7 @@ export default async function AppLayout({
         <Topbar user={user} />
         <main className="p-6">{children}</main>
       </div>
+      <CopilotSheet />
     </div>
   );
 }
