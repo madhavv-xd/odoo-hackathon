@@ -1,6 +1,8 @@
 import { getSimpleDashboardKPIs, getAttentionPanel } from "@/lib/dashboard";
 import type { VehicleType } from "@/generated/prisma/enums";
 import { DashboardFilters } from "./filters";
+import { BriefingCard } from "./briefing-card";
+import { ActivityTimeline } from "./activity-timeline";
 import {
   Truck,
   CheckCircle,
@@ -99,6 +101,9 @@ export default async function DashboardPage({
         </div>
         <DashboardFilters />
       </div>
+
+      {/* AI Ops Briefing */}
+      <BriefingCard />
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7">
@@ -230,6 +235,9 @@ export default async function DashboardPage({
           </div>
         </div>
       )}
+
+      {/* Live activity timeline */}
+      <ActivityTimeline />
     </div>
   );
 }

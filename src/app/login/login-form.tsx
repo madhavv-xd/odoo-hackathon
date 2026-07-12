@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { Truck } from "lucide-react";
 import { login, type LoginState } from "./actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,10 +25,18 @@ export function LoginForm() {
 
   return (
     <div className="w-full max-w-sm space-y-6">
+      {/* Logo shown only on mobile, where the brand panel is hidden */}
+      <div className="flex items-center gap-2 lg:hidden">
+        <div className="flex size-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
+          <Truck className="size-4" />
+        </div>
+        <span className="font-semibold tracking-tight">TransitOps</span>
+      </div>
+
       <div className="space-y-1">
         <h1 className="text-2xl font-semibold">Sign in</h1>
         <p className="text-sm text-muted-foreground">
-          Use a demo account below or enter credentials.
+          Pick a demo role below, or enter credentials to continue.
         </p>
       </div>
 
@@ -75,20 +84,26 @@ export function LoginForm() {
         </p>
         <div className="grid grid-cols-2 gap-2">
           {DEMO_ACCOUNTS.map((acc) => (
-            <Button
+            <button
               key={acc.email}
               type="button"
-              variant="outline"
-              className="justify-start text-xs"
               onClick={() => {
                 setEmail(acc.email);
                 setPassword(DEMO_PASSWORD);
               }}
+              className="flex flex-col items-start gap-0.5 rounded-lg border border-border bg-background px-3 py-2 text-left transition-colors hover:border-primary/50 hover:bg-muted"
             >
-              {acc.label}
-            </Button>
+              <span className="text-xs font-medium">{acc.label}</span>
+              <span className="data text-[10px] text-muted-foreground">
+                {acc.email}
+              </span>
+            </button>
           ))}
         </div>
+        <p className="text-[11px] text-muted-foreground">
+          Password <span className="data">{DEMO_PASSWORD}</span> is filled in
+          automatically.
+        </p>
       </div>
     </div>
   );

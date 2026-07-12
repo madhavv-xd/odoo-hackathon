@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { vehicleEconomics } from "@/lib/reports";
 import { VEHICLE_STATUS_META, TRIP_STATUS_META } from "@/lib/status";
 import { StatusBadge } from "@/components/app/status-badge";
+import { VehicleHealthCard } from "./vehicle-health-card";
 import {
   Table,
   TableBody,
@@ -113,6 +114,8 @@ export default async function VehicleDetailPage({
           }
         />
       </div>
+
+      <VehicleHealthCard vehicleId={vehicle.id} />
 
       {/* Trips */}
       <section className="space-y-2">

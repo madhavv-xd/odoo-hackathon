@@ -35,6 +35,28 @@ export function CopilotSheet() {
     if (open) inputRef.current?.focus();
   }, [open]);
 
+  // ⌘K / Ctrl+K toggles the copilot from anywhere; Escape closes it. The topbar
+  // "Ask Copilot" button opens it via a custom event so it stays decoupled.
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setOpen((o) => !o);
+      } else if (e.key === "Escape") {
+        setOpen(false);
+      }
+    }
+    function onToggle() {
+      setOpen((o) => !o);
+    }
+    window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("transitops:toggle-copilot", onToggle);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("transitops:toggle-copilot", onToggle);
+    };
+  }, []);
+
   async function sendMessage(text: string) {
     if (!text.trim() || streaming) return;
 
@@ -110,6 +132,7 @@ export function CopilotSheet() {
         onClick={() => setOpen(!open)}
         className="fixed bottom-6 right-6 z-50 flex size-12 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-transform hover:scale-105 active:scale-95"
         aria-label="Open Fleet Copilot"
+        title="Fleet Copilot (⌘K / Ctrl+K)"
       >
         {open ? <X className="size-5" /> : <MessageSquare className="size-5" />}
       </button>
@@ -129,6 +152,9 @@ export function CopilotSheet() {
               <div className="flex items-center gap-2">
                 <Sparkles className="size-4 text-primary" />
                 <h2 className="text-sm font-semibold">Fleet Copilot</h2>
+                <kbd className="rounded border border-border bg-secondary px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                  ⌘K
+                </kbd>
               </div>
               <button
                 onClick={() => setOpen(false)}

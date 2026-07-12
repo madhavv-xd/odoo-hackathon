@@ -5,6 +5,7 @@ import type { SessionUser } from "@/lib/auth";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CopilotButton } from "@/components/app/copilot-button";
 
 export function Topbar({ user }: { user: SessionUser }) {
   return (
@@ -20,6 +21,7 @@ export function Topbar({ user }: { user: SessionUser }) {
       </form>
 
       <div className="flex items-center gap-3">
+        <CopilotButton />
         <Badge
           variant="outline"
           className="border-primary/40 text-primary"

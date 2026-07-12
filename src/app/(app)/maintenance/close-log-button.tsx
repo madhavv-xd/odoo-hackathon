@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect } from "react";
 import { toast } from "sonner";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, Loader2 } from "lucide-react";
 import { closeMaintenanceLog, type ActionState } from "./actions";
 import { Button } from "@/components/ui/button";
 
@@ -27,7 +27,12 @@ export function CloseLogButton({ id }: { id: string }) {
         disabled={pending}
         className="gap-1.5 text-status-available"
       >
-        <CheckCircle2 className="size-3.5" /> Close
+        {pending ? (
+          <Loader2 className="size-3.5 animate-spin" />
+        ) : (
+          <CheckCircle2 className="size-3.5" />
+        )}{" "}
+        Close
       </Button>
     </form>
   );

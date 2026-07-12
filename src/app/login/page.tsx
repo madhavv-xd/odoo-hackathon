@@ -1,56 +1,48 @@
-import { Truck } from "lucide-react";
+import { Truck, Sparkles } from "lucide-react";
 import { LoginForm } from "./login-form";
+import { LiveOpsPanel } from "./live-ops-panel";
 
-const ROLES = [
-  { name: "Fleet Manager", desc: "Vehicles, maintenance, full visibility" },
-  { name: "Dispatcher", desc: "Create, dispatch & complete trips" },
-  { name: "Safety Officer", desc: "Driver profiles & license validity" },
-  { name: "Financial Analyst", desc: "Fuel, expenses, reports & analytics" },
-];
+const ROLES = ["Fleet Manager", "Dispatcher", "Safety Officer", "Financial Analyst"];
 
 export default function LoginPage() {
   return (
     <div className="grid min-h-screen lg:grid-cols-2">
-      {/* Brand panel */}
-      <div className="hidden flex-col justify-between bg-sidebar p-10 lg:flex">
+      {/* Brand panel — a live ops console, not a marketing splash */}
+      <div className="hidden flex-col justify-between bg-sidebar p-12 lg:flex">
         <div className="flex items-center gap-2">
           <div className="flex size-9 items-center justify-center rounded-md bg-primary text-primary-foreground">
             <Truck className="size-5" />
           </div>
-          <span className="text-lg font-semibold tracking-tight">
-            TransitOps
-          </span>
+          <span className="text-lg font-semibold tracking-tight">TransitOps</span>
         </div>
 
-        <div className="space-y-6">
-          <div className="space-y-2">
-            <h2 className="text-3xl font-semibold leading-tight">
-              Smart transport
+        <div className="space-y-8">
+          <div className="space-y-4">
+            <span className="data text-xs uppercase tracking-[0.2em] text-primary">
+              Fleet Operations Console
+            </span>
+            <h2 className="text-4xl font-semibold leading-[1.1] tracking-tight">
+              The console your
               <br />
-              operations console
+              fleet runs on.
             </h2>
             <p className="max-w-md text-sm text-muted-foreground">
-              Vehicles, drivers, dispatch, maintenance and expenses — with every
-              business rule enforced in the database, not the UI.
+              Vehicles, drivers, dispatch, maintenance and expenses — every
+              business rule enforced in the database, not just the UI.
             </p>
+            <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Sparkles className="size-3.5 text-primary" />
+              Now with an AI dispatch copilot
+            </span>
           </div>
 
-          <ul className="space-y-3">
-            {ROLES.map((r) => (
-              <li key={r.name} className="flex items-start gap-3">
-                <span className="mt-1.5 size-1.5 rounded-full bg-primary" />
-                <div>
-                  <p className="text-sm font-medium">{r.name}</p>
-                  <p className="text-xs text-muted-foreground">{r.desc}</p>
-                </div>
-              </li>
-            ))}
-          </ul>
+          <LiveOpsPanel />
         </div>
 
-        <p className="text-xs text-muted-foreground">
-          Built on Bun · Next.js · Neon
-        </p>
+        <div className="flex items-center justify-between gap-4 text-xs text-muted-foreground">
+          <span className="data tracking-wide">{ROLES.join("  ·  ")}</span>
+          <span>Bun · Next.js · Neon</span>
+        </div>
       </div>
 
       {/* Form panel */}

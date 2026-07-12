@@ -2,20 +2,23 @@
 
 import { useActionState, useEffect } from "react";
 import { toast } from "sonner";
-import { Send, XCircle } from "lucide-react";
+import { Loader2, Send, XCircle } from "lucide-react";
 import { dispatchTrip, cancelTrip, type ActionState } from "./actions";
 import type { TripStatus } from "@/generated/prisma/enums";
 import { Button } from "@/components/ui/button";
 import { CompleteTripDialog } from "./complete-trip-dialog";
+import { ConfirmButton } from "@/components/app/confirm-button";
 
 function BoundActionButton({
   id,
   action,
+  icon,
   children,
   className,
 }: {
   id: string;
   action: (prev: ActionState, formData: FormData) => Promise<ActionState>;
+  icon: React.ReactNode;
   children: React.ReactNode;
   className?: string;
 }) {
@@ -38,9 +41,38 @@ function BoundActionButton({
         disabled={pending}
         className={className}
       >
+        {pending ? <Loader2 className="size-3.5 animate-spin" /> : icon}
         {children}
       </Button>
     </form>
+  );
+}
+
+function CancelTripButton({
+  id,
+  status,
+}: {
+  id: string;
+  status: TripStatus;
+}) {
+  return (
+    <ConfirmButton
+      id={id}
+      action={cancelTrip}
+      trigger={
+        <>
+          <XCircle className="size-3.5" /> Cancel
+        </>
+      }
+      triggerClassName="gap-1.5 text-muted-foreground hover:text-destructive"
+      title="Cancel this trip?"
+      description={
+        status === "dispatched"
+          ? "The trip will be marked cancelled and its vehicle and driver return to the available pool."
+          : "This draft trip will be marked cancelled."
+      }
+      confirmLabel="Cancel trip"
+    />
   );
 }
 
@@ -61,17 +93,12 @@ export function TripRowActions({
         <BoundActionButton
           id={id}
           action={dispatchTrip}
+          icon={<Send className="size-3.5" />}
           className="gap-1.5 text-status-on-trip"
         >
-          <Send className="size-3.5" /> Dispatch
+          Dispatch
         </BoundActionButton>
-        <BoundActionButton
-          id={id}
-          action={cancelTrip}
-          className="gap-1.5 text-muted-foreground hover:text-destructive"
-        >
-          <XCircle className="size-3.5" /> Cancel
-        </BoundActionButton>
+        <CancelTripButton id={id} status={status} />
       </div>
     );
   }
@@ -83,13 +110,7 @@ export function TripRowActions({
           startOdometer={startOdometer}
           regNumber={regNumber}
         />
-        <BoundActionButton
-          id={id}
-          action={cancelTrip}
-          className="gap-1.5 text-muted-foreground hover:text-destructive"
-        >
-          <XCircle className="size-3.5" /> Cancel
-        </BoundActionButton>
+        <CancelTripButton id={id} status={status} />
       </div>
     );
   }
