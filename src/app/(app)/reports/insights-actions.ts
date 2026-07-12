@@ -26,6 +26,13 @@ export async function generateInsights(): Promise<{
     "dispatcher",
   ]);
 
+  if (!process.env.GROQ_API_KEY) {
+    return {
+      insights: null,
+      error: "AI is not configured — set GROQ_API_KEY to enable insights.",
+    };
+  }
+
   try {
     const economics = await vehicleEconomics();
 

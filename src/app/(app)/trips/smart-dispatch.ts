@@ -41,6 +41,13 @@ export async function smartDispatch(params: Params): Promise<SmartDispatchResult
     error: null,
   };
 
+  if (!process.env.GROQ_API_KEY) {
+    return {
+      ...empty,
+      error: "AI is not configured — set GROQ_API_KEY to enable suggestions.",
+    };
+  }
+
   if (params.cargoWeightKg <= 0 || params.plannedDistanceKm <= 0) {
     return { ...empty, error: "Enter cargo weight and distance first" };
   }
@@ -119,6 +126,14 @@ Respond with ONLY a JSON object: {"vehicleReg": "<reg from candidates>", "driver
     const driver = drivers.find(
       (d) => d.name.toLowerCase() === parsed.driverName?.toLowerCase(),
     );
+
+    // Don't claim success if the model named assets that aren't in the pool.
+    if (!vehicle && !driver) {
+      return {
+        ...empty,
+        error: "Copilot couldn't match a recommendation — please pick manually.",
+      };
+    }
 
     return {
       vehicleId: vehicle?.id ?? null,

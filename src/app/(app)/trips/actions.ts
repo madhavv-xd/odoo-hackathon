@@ -215,7 +215,10 @@ export async function cancelTrip(
       } else if (trip.status !== "draft") {
         throw new Error("Only draft or dispatched trips can be cancelled");
       }
-      await tx.trip.update({ where: { id }, data: { status: "cancelled" } });
+      await tx.trip.update({
+        where: { id },
+        data: { status: "cancelled", cancelledAt: new Date() },
+      });
     });
 
     revalidateAll();

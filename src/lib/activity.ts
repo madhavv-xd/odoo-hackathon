@@ -9,6 +9,7 @@ export type ActivityKind =
   | "drafted"
   | "dispatched"
   | "completed"
+  | "cancelled"
   | "maint_open"
   | "maint_close";
 
@@ -69,6 +70,16 @@ export async function getRecentActivity(limit = 12): Promise<ActivityEvent[]> {
         reg,
         title: `${reg} → Available`,
         detail: `trip completed · ${t.plannedDistanceKm} km`,
+      });
+    }
+    if (t.cancelledAt) {
+      events.push({
+        id: `${t.id}-cancel`,
+        at: t.cancelledAt,
+        kind: "cancelled",
+        reg,
+        title: `${reg} · trip cancelled`,
+        detail: route,
       });
     }
   }

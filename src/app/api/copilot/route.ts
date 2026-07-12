@@ -27,6 +27,13 @@ export async function POST(req: NextRequest) {
     return new Response("Unauthorized", { status: 401 });
   }
 
+  if (!process.env.GROQ_API_KEY) {
+    return new Response(
+      "AI is not configured — set GROQ_API_KEY to enable the copilot.",
+      { status: 503 },
+    );
+  }
+
   try {
     const { messages } = (await req.json()) as {
       messages: { role: "user" | "assistant"; content: string }[];

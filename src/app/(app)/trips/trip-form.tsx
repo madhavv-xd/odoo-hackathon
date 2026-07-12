@@ -88,7 +88,9 @@ export function TripForm({
       if (result.vehicleId) setVehicleId(result.vehicleId);
       if (result.driverId) setDriverId(result.driverId);
       setSuggestion(result.reason);
-      toast.success("Copilot picked an assignment");
+      if (result.vehicleId || result.driverId) {
+        toast.success("Copilot picked an assignment");
+      }
     } finally {
       setSuggesting(false);
     }

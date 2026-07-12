@@ -33,6 +33,13 @@ export async function generateBriefing(): Promise<{
     "dispatcher",
   ]);
 
+  if (!process.env.GROQ_API_KEY) {
+    return {
+      items: null,
+      error: "AI is not configured — set GROQ_API_KEY to enable the briefing.",
+    };
+  }
+
   try {
     const snapshot = await getFleetSnapshot();
     const client = getClient();

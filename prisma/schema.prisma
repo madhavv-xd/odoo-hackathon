@@ -111,6 +111,7 @@ model Trip {
   createdAt         DateTime   @default(now())
   dispatchedAt      DateTime?
   completedAt       DateTime?
+  cancelledAt       DateTime?
 
   vehicle  Vehicle   @relation(fields: [vehicleId], references: [id])
   driver   Driver    @relation(fields: [driverId], references: [id])

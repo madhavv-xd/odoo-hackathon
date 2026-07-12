@@ -4,6 +4,7 @@ import { getRecentActivity, timeAgo, type ActivityKind } from "@/lib/activity";
 const KIND_COLOR: Record<ActivityKind, string> = {
   dispatched: "bg-status-on-trip",
   completed: "bg-status-available",
+  cancelled: "bg-status-error",
   maint_open: "bg-status-warning",
   maint_close: "bg-status-available",
   drafted: "bg-muted-foreground",

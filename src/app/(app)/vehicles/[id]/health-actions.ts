@@ -32,6 +32,13 @@ export async function analyzeVehicleHealth(
     "financial_analyst",
   ]);
 
+  if (!process.env.GROQ_API_KEY) {
+    return {
+      health: null,
+      error: "AI is not configured — set GROQ_API_KEY to enable health checks.",
+    };
+  }
+
   try {
     const vehicle = await db.vehicle.findUnique({
       where: { id: vehicleId },

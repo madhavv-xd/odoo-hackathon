@@ -15,7 +15,7 @@ export default async function AppLayout({
   return (
     <div className="min-h-screen">
       <Sidebar role={user.role} />
-      <div className="pl-60">
+      <div className="md:pl-60">
         <Topbar user={user} />
         <main className="p-6">{children}</main>
       </div>

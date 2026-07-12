@@ -1,7 +1,8 @@
 /**
  * TransitOps demo seed (context.md §10). Run: `bun run seed`.
  *
- * Seeds 4 users, 8 vehicles, 6 drivers, 5 trips, 3 maintenance logs,
+ * Seeds 4 users, 8 vehicles, 6 drivers, 6 trips (draft, 2 dispatched,
+ * 2 completed, cancelled), 3 maintenance logs,
  * ~12 fuel logs, ~8 expenses, with revenue on completed trips (non-zero ROI).
  *
  * NOTE: Van-05 and driver Alex are intentionally NOT seeded — the live pitch
@@ -67,6 +68,9 @@ async function main() {
 
   // One draft (pending dispatch).
   await db.trip.create({ data: { source: "Thane", destination: "Kalyan", vehicleId: min01.id, driverId: ravi.id, cargoWeightKg: 600, plannedDistanceKm: 40, status: "draft" } });
+
+  // One cancelled (vehicle + driver were released back to available).
+  await db.trip.create({ data: { source: "Mumbai", destination: "Lonavala", vehicleId: bik01.id, driverId: deepak.id, cargoWeightKg: 100, plannedDistanceKm: 65, status: "cancelled", cancelledAt: new Date(Date.now() - 6 * 3_600_000) } });
 
   // --- Maintenance logs (3) --------------------------------------------------
   await db.maintenanceLog.create({ data: { vehicleId: van02.id, description: "Clutch assembly replacement", cost: 18000, status: "open" } }); // keeps VAN-02 in_shop
