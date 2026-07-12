@@ -1,4 +1,8 @@
-import type { VehicleStatus, DriverStatus } from "@/generated/prisma/enums";
+import type {
+  VehicleStatus,
+  DriverStatus,
+  TripStatus,
+} from "@/generated/prisma/enums";
 
 export type StatusMeta = { label: string; dotClass: string };
 
@@ -16,4 +20,13 @@ export const DRIVER_STATUS_META: Record<DriverStatus, StatusMeta> = {
   on_trip: { label: "On Trip", dotClass: "bg-status-on-trip" },
   off_duty: { label: "Off Duty", dotClass: "bg-muted-foreground" },
   suspended: { label: "Suspended", dotClass: "bg-status-error" },
+};
+
+// Trip lifecycle: draft (neutral) → dispatched (blue/on-trip) → completed
+// (green) ; cancelled (red).
+export const TRIP_STATUS_META: Record<TripStatus, StatusMeta> = {
+  draft: { label: "Draft", dotClass: "bg-muted-foreground" },
+  dispatched: { label: "Dispatched", dotClass: "bg-status-on-trip" },
+  completed: { label: "Completed", dotClass: "bg-status-available" },
+  cancelled: { label: "Cancelled", dotClass: "bg-status-error" },
 };
