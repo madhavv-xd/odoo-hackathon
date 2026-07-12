@@ -11,7 +11,7 @@ export type ActionState = { error?: string; success?: string };
 const FUEL_PRICE_PER_L = 96;
 
 // Trip actions are usable by drivers (their core job) and fleet managers.
-const TRIP_ROLES = ["driver", "fleet_manager"] as const;
+const TRIP_ROLES = ["dispatcher", "fleet_manager"] as const;
 
 function revalidateAll() {
   // A single trip mutation changes vehicle + driver status shown elsewhere.

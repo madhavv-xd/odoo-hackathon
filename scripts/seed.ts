@@ -32,7 +32,7 @@ async function main() {
   await db.user.createMany({
     data: [
       { email: "manager@transitops.dev", name: "Priya Nair", role: "fleet_manager", passwordHash },
-      { email: "driver@transitops.dev", name: "Ravi Kumar", role: "driver", passwordHash },
+      { email: "dispatcher@transitops.dev", name: "Ravi Kumar", role: "dispatcher", passwordHash },
       { email: "safety@transitops.dev", name: "Anjali Menon", role: "safety_officer", passwordHash },
       { email: "finance@transitops.dev", name: "Karan Shah", role: "financial_analyst", passwordHash },
     ],

@@ -20,7 +20,7 @@ export type NavItem = {
 
 const ALL: Role[] = [
   "fleet_manager",
-  "driver",
+  "dispatcher",
   "safety_officer",
   "financial_analyst",
 ];
@@ -63,7 +63,7 @@ export function navForRole(role: Role): NavItem[] {
 
 export const ROLE_LABELS: Record<Role, string> = {
   fleet_manager: "Fleet Manager",
-  driver: "Driver",
+  dispatcher: "Dispatcher",
   safety_officer: "Safety Officer",
   financial_analyst: "Financial Analyst",
 };

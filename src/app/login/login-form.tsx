@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 
 const DEMO_ACCOUNTS = [
   { label: "Fleet Manager", email: "manager@transitops.dev" },
-  { label: "Driver", email: "driver@transitops.dev" },
+  { label: "Dispatcher", email: "dispatcher@transitops.dev" },
   { label: "Safety Officer", email: "safety@transitops.dev" },
   { label: "Financial Analyst", email: "finance@transitops.dev" },
 ];

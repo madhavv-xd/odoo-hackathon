@@ -23,7 +23,7 @@ export async function generateInsights(): Promise<{
     "fleet_manager",
     "financial_analyst",
     "safety_officer",
-    "driver",
+    "dispatcher",
   ]);
 
   try {

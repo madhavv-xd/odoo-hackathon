@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { db } from "@/lib/db";
 import { getSession } from "@/lib/auth";
 import { VEHICLE_STATUS_META } from "@/lib/status";
@@ -84,7 +85,12 @@ export default async function VehiclesPage({
               vehicles.map((v) => (
                 <TableRow key={v.id}>
                   <TableCell className="data font-medium">
-                    {v.regNumber}
+                    <Link
+                      href={`/vehicles/${v.id}`}
+                      className="hover:text-primary hover:underline"
+                    >
+                      {v.regNumber}
+                    </Link>
                   </TableCell>
                   <TableCell>{v.name}</TableCell>
                   <TableCell className="capitalize">{v.type}</TableCell>

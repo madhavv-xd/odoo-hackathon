@@ -12,7 +12,7 @@ export async function exportReportsCsv(): Promise<string> {
     "fleet_manager",
     "financial_analyst",
     "safety_officer",
-    "driver",
+    "dispatcher",
   ]);
 
   const data = await vehicleEconomics();

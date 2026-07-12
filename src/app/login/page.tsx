@@ -3,7 +3,7 @@ import { LoginForm } from "./login-form";
 
 const ROLES = [
   { name: "Fleet Manager", desc: "Vehicles, maintenance, full visibility" },
-  { name: "Driver", desc: "Create, dispatch & complete trips" },
+  { name: "Dispatcher", desc: "Create, dispatch & complete trips" },
   { name: "Safety Officer", desc: "Driver profiles & license validity" },
   { name: "Financial Analyst", desc: "Fuel, expenses, reports & analytics" },
 ];
