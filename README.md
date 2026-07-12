@@ -1,435 +1,418 @@
-# Odoo Hackathon — Fleet Management System
+# 🚚 TransitOps — Smart Fleet Operations Console
 
-A **Next.js 15** fleet management application for the Odoo Hackathon. Manages vehicles, drivers, trips, maintenance, fuel logs, and expenses with a dark-mode dashboard built on **shadcn/ui**, **Tailwind CSS v4**, **Prisma + PostgreSQL**, and **Next.js 15 App Router**.
+A full-stack fleet operations platform built for the Odoo Hackathon. TransitOps digitizes **vehicle, driver, dispatch, maintenance, and expense** management with **business rules enforced in the database**, live KPIs, and an **AI copilot grounded in real operational data**.
+
+> **Judges' bar:** clean data model, correct business-rule automation, polished operational UI. TransitOps is built to demonstrate all three.
+
+**Tech:** Next.js 16 (App Router) · React 19 · Bun · Prisma 7 + Neon Postgres · Tailwind v4 + shadcn/ui · Groq (Llama 3.3 70B) · Custom JWT auth · Zod
 
 ---
 
-## 🏗 Project Structure
+## ✨ Highlights
 
+- **Enforced business rules** — capacity limits, license validity, and status transitions are validated in the UI *and* re-checked server-side inside database transactions.
+- **Status-transition automation** — dispatching a trip flips the trip, vehicle, and driver in a single transaction (`Van-05 → On Trip`).
+- **AI, grounded in live data** — a Fleet Copilot, an Ops Briefing, per-vehicle Health Checks, AI Insights, and Smart Dispatch — all fed a live JSON snapshot of the fleet, so they never hallucinate a vehicle.
+- **Role-based access (defense in depth)** — nav hides what you can't do, and every server action re-checks your role.
+- **Operational UI** — dark ops-console theme, monospace data treatment, live activity timeline, confirmation dialogs, responsive down to mobile.
+
+📹 A full narrated demo script with exact values lives in **[`DEMO.md`](./DEMO.md)**.
+
+---
+
+## 🏛 Architecture
+
+### System overview
+
+```mermaid
+flowchart TD
+    subgraph Browser["🖥️ Browser"]
+        RSC["React 19 Server Components"]
+        CC["Client Components<br/>(dialogs, copilot, forms)"]
+    end
+
+    subgraph Next["▲ Next.js 16 (App Router) — Vercel"]
+        MW["proxy.ts middleware<br/>(JWT guard on every route)"]
+        Pages["Server Components<br/>(data reads)"]
+        SA["Server Actions<br/>(mutations + AI calls)"]
+        Route["/api/copilot<br/>(streaming route handler)"]
+    end
+
+    subgraph Data["🗄️ Data & AI"]
+        Prisma["Prisma 7 + PrismaPg adapter"]
+        Neon[("Neon Postgres<br/>(pooled)")]
+        Groq["Groq API<br/>Llama 3.3 70B<br/>(OpenAI-compatible)"]
+    end
+
+    Browser -->|HTTP / Server Action| MW
+    MW --> Pages
+    MW --> SA
+    MW --> Route
+    Pages --> Prisma
+    SA --> Prisma
+    Route --> Prisma
+    Prisma --> Neon
+    SA -->|live fleet snapshot| Groq
+    Route -->|live fleet snapshot| Groq
 ```
-odoo-hackathon/
-├── .claude/                    # Opencode/Claude configuration & skills
-├── .next/                      # Next.js build output (gitignored)
-├── .env                        # Environment variables (gitignored)
-├── prisma/
-│   └── schema.prisma           # Prisma schema (PostgreSQL)
-├── public/                     # Static assets (favicon, etc.)
-├── scripts/
-│   └── seed.ts                 # Seed script (bun run seed)
-├── src/
-│   ├── app/                    # Next.js App Router
-│   │   ├── (app)/              # Route group: authenticated dashboard
-│   │   │   ├── dashboard/      # Dashboard page
-│   │   │   ├── vehicles/       # Vehicle management
-│   │   │   ├── drivers/        # Driver management
-│   │   │   ├── trips/          # Trip management
-│   │   │   ├── maintenance/    # Maintenance logs
-│   │   │   ├── fuel/           # Fuel logs
-│   │   │   ├── expenses/       # Expense tracking
-│   │   │   └── layout.tsx      # Dashboard layout with sidebar
-│   │   ├── api/                # API routes (Next.js route handlers)
-│   │   │   ├── auth/           # Auth endpoints (login, logout, me)
-│   │   │   ├── vehicles/       # Vehicle CRUD
-│   │   │   ├── drivers/        # Driver CRUD
-│   │   │   ├── trips/          # Trip CRUD + dispatch
-│   │   │   ├── maintenance/    # Maintenance logs
-│   │   │   ├── fuel/           # Fuel logs
-│   │   │   └── expenses/       # Expense CRUD
-│   │   ├── login/              # Login page
-│   │   ├── globals.css         # Global styles + Tailwind v4
-│   │   ├── layout.tsx          # Root layout
-│   │   └── page.tsx            # Landing page (redirects to login/dashboard)
-│   ├── components/
-│   │   ├── ui/                 # shadcn/ui components (Button, Card, Dialog, etc.)
-│   │   └── app/                # App-specific composite components
-│   │       ├── sidebar.tsx     # Sidebar navigation
-│   │       ├── header.tsx      # Top header with user menu
-│   │       ├── data-table.tsx  # Reusable data table component
-│   │       ├── status-badge.tsx# Status badge component
-│   │       └── ...             # Other shared components
-│   ├── lib/                    # Core libraries & utilities
-│   │   ├── auth.ts             # Auth utilities (JWT, bcrypt, session)
-│   │   ├── db.ts               # Prisma client singleton
-│   │   ├── auth.ts             # Auth helpers
-│   │   ├── dashboard.ts        # Dashboard stats queries
-│   │   ├── dispatch-pool.ts    # Trip dispatch pool logic
-│   │   ├── fleet-snapshot.ts   # Fleet snapshot queries
-│   │   ├── reports.ts          # Reports/analytics queries
-│   │   ├── status.ts           # Status constants & helpers
-│   │   ├── nav.ts              # Navigation config
-│   │   ├── utils.ts            # Utility functions (cn, etc.)
-│   │   └── dispatch-pool.ts    # Dispatch pool logic
-│   └── proxy.ts                # Next.js rewrite proxy config
-├── .env                        # Environment variables (NOT committed)
-├── .env.example                # Example env file (template)
-├── .gitignore
-├── AGENTS.md                   # Agent instructions for AI assistants
-├── AGENTS.md
-├── build-plan.md               # Build plan / task breakdown
-├── components.json             # shadcn/ui config
-├── context.md                  # Project context for AI
-├── eslint.config.mjs
-├── next.config.ts
-├── next-env.d.ts
-├── package.json
-├── postcss.config.mjs
-├── prisma.config.ts
-├── tsconfig.json
-└── README.md                   # This file
+
+### Data model
+
+| Model | Key fields | Relations |
+|---|---|---|
+| `User` | `email` (unique), name, role, passwordHash | — |
+| `Vehicle` | `regNumber` (unique), type, maxLoadKg, odometerKm, acquisitionCost, status | → Trip, MaintenanceLog, FuelLog, Expense |
+| `Driver` | name, licenseNumber, licenseCategory, licenseExpiry, safetyScore, status | → Trip |
+| `Trip` | source, destination, cargoWeightKg, plannedDistanceKm, status, start/endOdometer, fuelConsumedL, revenue, dispatchedAt / completedAt / cancelledAt | ← Vehicle, Driver · → FuelLog |
+| `MaintenanceLog` | description, cost, status, openedAt, closedAt | ← Vehicle |
+| `FuelLog` | liters, cost, date | ← Vehicle, Trip? |
+| `Expense` | category, amount, note, date | ← Vehicle |
+| `AppSettings` | depotName, currency, distanceUnit (singleton) | — |
+
+Money is stored as **integer rupees**, distances in **km**, weights in **kg**. Enums are native Prisma enums; full definitions live in [`prisma/schema.prisma`](./prisma/schema.prisma).
+
+### Trip lifecycle & status automation
+
+```mermaid
+stateDiagram-v2
+    [*] --> draft: Create trip
+    draft --> dispatched: Dispatch<br/>(vehicle+driver → on_trip)
+    draft --> cancelled: Cancel
+    dispatched --> completed: Complete<br/>(vehicle+driver → available,<br/>odometer updated, fuel log created)
+    dispatched --> cancelled: Cancel<br/>(vehicle+driver → available)
+    completed --> [*]
+    cancelled --> [*]
 ```
+
+```mermaid
+stateDiagram-v2
+    direction LR
+    available --> on_trip: trip dispatched
+    on_trip --> available: trip completed / cancelled
+    available --> in_shop: maintenance opened
+    in_shop --> available: maintenance closed
+    available --> retired: retire (irreversible)
+```
+
+Every transition surfaces a toast (e.g. `Van-05 → On Trip`) so the automation is visible.
+
+### Authentication flow
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant L as login action
+    participant DB as Neon / Prisma
+    participant MW as proxy middleware
+
+    U->>L: submit email + password
+    L->>DB: user.findUnique(email)
+    DB-->>L: user + passwordHash
+    L->>L: bcrypt.compare()
+    L->>L: sign JWT (jose, HS256)
+    L-->>U: Set-Cookie transitops_session (httpOnly) + redirect /dashboard
+    Note over U,MW: On every subsequent request
+    U->>MW: request /dashboard (cookie)
+    MW->>MW: jwtVerify(cookie)
+    alt valid
+        MW-->>U: allow
+    else invalid / missing
+        MW-->>U: 307 redirect /login
+    end
+```
+
+**Defense in depth:** (1) `proxy.ts` guards routes → (2) `requireRole([...])` re-checks in each server action → (3) UI hides nav items and controls the role can't use.
+
+### AI grounding (no RAG)
+
+```mermaid
+flowchart LR
+    Q["User question /<br/>AI action"] --> Snap
+    subgraph Server
+        Snap["Assemble live fleet snapshot<br/>(KPIs, vehicles, drivers,<br/>trips, per-vehicle costs) as JSON"]
+        Prompt["System prompt +<br/>snapshot injected"]
+    end
+    Snap --> Prompt
+    Prompt --> Groq["Groq · Llama 3.3 70B"]
+    Groq --> Ans["Grounded answer<br/>cites real reg numbers"]
+    Ans --> Q
+```
+
+The fleet is small (tens of rows), so the entire operational snapshot fits in a single prompt — **no embeddings, no vector DB**. This is why answers can't reference vehicles that don't exist.
+
+---
+
+## 🧩 Features
+
+### Business rules (enforced server-side)
+
+1. `regNumber` is unique (DB constraint + friendly error).
+2. Dispatch pool = vehicles with `status = available` only.
+3. A driver is assignable only if `available` **and** `licenseExpiry > today` (expired/suspended blocked with an explicit reason).
+4. A vehicle/driver already `on_trip` can't be double-booked (re-checked inside the dispatch transaction).
+5. `cargoWeightKg ≤ vehicle.maxLoadKg` (e.g. *"Cargo 550 kg exceeds Van-05 capacity 500 kg"*).
+6. **Dispatch** → trip `dispatched`, vehicle + driver → `on_trip` (single transaction).
+7. **Complete** → requires end odometer + fuel; trip `completed`, vehicle/driver → `available`, odometer updated, fuel log auto-created.
+8. **Cancel** → releases vehicle + driver back to `available`.
+9. **Open maintenance** → vehicle → `in_shop` (instantly removed from dispatch pool).
+10. **Close maintenance** → vehicle → `available` (unless retired).
+
+### AI features (Groq · Llama 3.3 70B)
+
+| Feature | Where | What it does |
+|---|---|---|
+| **Fleet Copilot** | Everywhere (⌘K / topbar / floating button) | Streaming chat grounded in the live fleet snapshot |
+| **AI Ops Briefing** | Dashboard | Prioritized "what needs attention" with severity levels |
+| **Smart Dispatch** | Trip form | Recommends the best-fit vehicle + driver from the eligible pool, with rationale |
+| **Vehicle Health Check** | Vehicle drill-down | Predictive-maintenance read from service/fuel/trip history |
+| **AI Insights** | Reports | 3–5 bullet insights & anomalies over report stats |
+
+All AI entry points degrade gracefully with a clear message if `GROQ_API_KEY` is unset.
+
+### Roles & access
+
+| Role | Dashboard | Vehicles | Drivers | Trips | Maintenance | Expenses | Reports | Settings |
+|---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| **Fleet Manager** | ✅ | ✅ | ✅ | ✅ create/dispatch | ✅ | ✅ | ✅ | ✅ |
+| **Dispatcher** | ✅ | 👁️ | 👁️ | ✅ create/dispatch | — | — | — | — |
+| **Safety Officer** | ✅ | 👁️ | ✅ | 👁️ | — | — | — | — |
+| **Financial Analyst** | ✅ | 👁️ | 👁️ | 👁️ | — | ✅ | ✅ | — |
+
+✅ full · 👁️ read-only · — hidden. Precise action gating (`requireRole`): **vehicle** & **maintenance** mutations → Fleet Manager only · **trip** create/dispatch/complete/cancel → Fleet Manager + Dispatcher · **driver** add/edit → Fleet Manager + Safety Officer, **suspend/reinstate** → Safety Officer only · **expenses/fuel** → Fleet Manager + Financial Analyst.
 
 ---
 
 ## 🚀 Quick Start
 
 ### Prerequisites
+- **Bun**
+- A **Neon** Postgres database (pooled connection string)
+- A **Groq** API key ([console.groq.com](https://console.groq.com))
 
-- **Bun** (recommended) or Node.js 20+
-- **PostgreSQL** (local or hosted — Neon, Supabase, Railway, etc.)
-
-### Installation
+### Setup
 
 ```bash
-# Clone & install
-git clone <repo-url>
+git clone https://github.com/madhavv-xd/odoo-hackathon
 cd odoo-hackathon
-bun install
+bun install                 # runs `prisma generate` via postinstall
 
-# Set up environment
-cp .env.example .env
-# Edit .env with your DATABASE_URL and AUTH_SECRET
+cp .env.example .env        # then fill in the values (see below)
 
-# Set up database
-bunx prisma migrate dev --name init
-bun run seed
+bunx prisma db push --schema=prisma/schema.prisma   # create tables (no migrations)
+bun run seed                # load demo data
 
-# Start development server
-bun run dev
+bun run dev                 # http://localhost:3000  → redirects to /login
 ```
 
-Open [http://localhost:3000](http://localhost:3000) → redirects to `/login`.
+Sign in with any demo account below (password `demo1234`).
 
 ---
 
-## 🔐 Authentication
+## 🔐 Demo accounts
 
-- **JWT-based** (jose) with HttpOnly cookies
-- **bcryptjs** for password hashing
-- **Seeded users** (run `bun run seed`):
-  | Email | Password | Role |
-  |-------|----------|------|
-  | admin@fleet.com | admin123 | Admin |
-  | manager@fleet.com | manager123 | Manager |
-  | dispatcher@fleet.com | dispatch123 | Dispatcher |
-  | viewer@fleet.com | viewer123 | Viewer |
+Password for all: **`demo1234`**
 
-> **No signup flow** — hackathon seed data only.
+| Role | Email |
+|---|---|
+| Fleet Manager | `manager@transitops.dev` |
+| Dispatcher | `dispatcher@transitops.dev` |
+| Safety Officer | `safety@transitops.dev` |
+| Financial Analyst | `finance@transitops.dev` |
+
+> No signup flow — seeded users only. Auth is a custom JWT (`jose`) in an httpOnly cookie (`transitops_session`), passwords hashed with `bcryptjs`.
 
 ---
 
-## 🗄 Database Schema (Prisma)
+## 🌐 Environment variables
 
-Key models in `prisma/schema.prisma`:
+Copy `.env.example` → `.env`:
 
-| Model | Purpose |
-|-------|---------|
-| `User` | Auth users with roles |
-| `Vehicle` | Fleet vehicles (type, status, capacity) |
-| `Driver` | Drivers (license, status, expiry) |
-| `Trip` | Trips (vehicle, driver, status, revenue) |
-| `MaintenanceLog` | Vehicle maintenance records |
-| `FuelLog` | Fuel purchases per vehicle |
-| `Expense` | Trip/vehicle expenses |
-| `Revenue` | Revenue entries for completed trips |
+```env
+# Neon Postgres — use the POOLED connection string (host contains "-pooler")
+DATABASE_URL="postgresql://user:pass@ep-xxxx-pooler.region.aws.neon.tech/db?sslmode=require"
 
-Run migrations:
-```bash
-bunx prisma migrate dev --name <name>
-bunx prisma generate
-```
+# Auth — signing secret for the JWT session cookie
+JWT_SECRET="a-long-random-string"
 
-Open Prisma Studio:
-```bash
-bunx prisma studio
+# AI (Groq, OpenAI-compatible)
+GROQ_API_KEY="gsk_..."
+AI_BASE_URL="https://api.groq.com/openai/v1"
+# Optional fallback: OPENROUTER_API_KEY="sk-or-..."
 ```
 
 ---
 
-## 🎨 Tech Stack
-
-| Layer | Technology |
-|-------|------------|
-| Framework | Next.js 15 (App Router, React 19) |
-| Styling | Tailwind CSS v4, shadcn/ui (Radix UI) |
-| Database | PostgreSQL + Prisma ORM |
-| Auth | JWT (jose) + bcryptjs, HttpOnly cookies |
-| Charts | Recharts |
-| Validation | Zod v4 |
-| AI | OpenAI SDK (for future AI features) |
-| Runtime | Bun (or Node 20+) |
-
----
-
-## 📜 Available Scripts
+## 📜 Scripts
 
 | Command | Description |
-|---------|-------------|
+|---|---|
 | `bun run dev` | Start dev server (Turbopack) |
 | `bun run build` | Production build |
 | `bun run start` | Start production server |
-| `bun run lint` | Run ESLint |
-| `bun run seed` | Seed database with demo data |
-| `bunx prisma migrate dev` | Create & run migration |
-| `bunx prisma generate` | Generate Prisma Client |
-| `bunx prisma studio` | Open Prisma Studio |
+| `bun run lint` | ESLint |
+| `bun run seed` | Wipe + reload demo data |
+| `bunx prisma db push --schema=prisma/schema.prisma` | Sync schema to the DB |
+| `bunx prisma generate` | Regenerate the Prisma client |
+| `bunx prisma studio` | Browse the DB |
 
 ---
 
-## 🌐 Environment Variables
-
-Create `.env` from `.env.example`:
-
-```env
-# Database
-DATABASE_URL="postgresql://user:pass@host:5432/dbname?schema=public"
-
-# Auth
-AUTH_SECRET="your-super-secret-jwt-key-min-32-chars"
-AUTH_COOKIE_NAME="fleet-auth"
-
-# Optional: OpenAI (for future AI features)
-OPENAI_API_KEY="sk-..."
-```
-
----
-
-## 🧭 App Routes (App Router)
+## 🗺 Routes
 
 | Route | Description | Access |
-|-------|-------------|--------|
-| `/` | Landing → redirects to login/dashboard | Public |
-| `/login` | Login page | Public |
-| `/dashboard` | Overview KPIs, fleet snapshot | Authenticated |
-| `/vehicles` | Vehicle CRUD, status badges | Authenticated |
-| `/drivers` | Driver CRUD, license status | Authenticated |
-| `/trips` | Trip list, dispatch, status workflow | Authenticated |
-| `/maintenance` | Maintenance logs | Authenticated |
-| `/fuel` | Fuel logs | Authenticated |
-| `/expenses` | Expense tracking | Authenticated |
-
-> All `/dashboard/*` routes are wrapped in `(app)` route group with shared layout (sidebar + header).
-
----
-
-## 🧩 Component Architecture
-
-### UI Components (`src/components/ui/`)
-shadcn/ui components — **don't modify directly**. Use `bunx shadcn@latest add <component>` to add new ones.
-
-### App Components (`src/components/app/`)
-Composite components specific to this app:
-- `Sidebar` — Navigation with role-based visibility
-- `Header` — User menu, theme toggle, notifications
-- `DataTable` — TanStack Table wrapper with sorting, filtering, pagination
-- `StatusBadge` — Consistent status rendering (colored dot + label)
-- `KPICard` — Dashboard metric cards
-- `VehicleCard`, `DriverCard`, `TripCard` — Entity display cards
-
-### Adding a New Page
-1. Create route in `src/app/(app)/<feature>/page.tsx`
-2. Create API routes in `src/app/api/<feature>/route.ts` (GET, POST, PATCH, DELETE)
-3. Add Zod schemas in `src/lib/<feature>.ts` for validation
-4. Add navigation entry in `src/lib/nav.ts`
-5. Create composite components in `src/components/app/` as needed
+|---|---|---|
+| `/login` | Auth screen (live ops console) | Public |
+| `/dashboard` | KPIs, AI briefing, activity timeline, attention panel | All roles |
+| `/vehicles` · `/vehicles/[id]` | Registry + drill-down with AI Health Check | All (edit: FM) |
+| `/drivers` | License validity, safety scores, suspend/reinstate | All |
+| `/trips` | Dispatch board, create form, Smart Dispatch, lifecycle actions | All (act: FM/Dispatcher) |
+| `/maintenance` | Open/close logs (auto In-Shop) | Fleet Manager |
+| `/expenses` | Fuel logs + expenses, per-vehicle cost rollup | FM / Financial Analyst |
+| `/reports` | Efficiency, utilization, cost, ROI, charts, AI insights, CSV export | FM / Financial Analyst |
+| `/settings` | General config + RBAC matrix | Fleet Manager |
+| `/search?q=` | Global search across vehicles/drivers/trips | All |
 
 ---
 
-## 🔐 Auth Helpers (`src/lib/auth.ts`)
+## 🧪 User testing flow (QA checklist)
 
-```typescript
-// Server-side: get current user from cookie
-import { getSession } from '@/lib/auth';
-const user = await getSession();
+Run this to verify a build end-to-end (for the narrated demo script, see [`DEMO.md`](./DEMO.md)).
 
-// Client-side: useSession hook (React context)
-import { useSession } from '@/components/providers/auth-provider';
-const { user, loading } = useSession();
+### Testing journey
+
+```mermaid
+flowchart TD
+    Start(["Open app"]) --> Login["/login — sign in<br/>as a demo role"]
+    Login --> Dash["Dashboard"]
+
+    Dash --> AI["AI checks:<br/>Generate briefing + ⌘K copilot"]
+    Dash --> Veh["Vehicles<br/>add · edit · retire (confirm)"]
+    Veh --> Drill["Vehicle drill-down<br/>AI Health Check"]
+    Dash --> Drv["Drivers<br/>license flags · suspend/reinstate"]
+    Dash --> Trip["Trips — hero flow ⬇"]
+    Dash --> Maint["Maintenance<br/>open → In Shop · close"]
+    Dash --> ExpRep["Expenses + Reports<br/>AI insights · CSV export"]
+    Dash --> RBAC["Re-login as each role<br/>verify hidden controls"]
+    RBAC --> Done(["All features verified ✅"])
 ```
+
+### Hero flow — dispatch a trip
+
+```mermaid
+flowchart LR
+    A["Create trip:<br/>route + cargo + distance"] --> B{"Cargo ≤ capacity<br/>& driver eligible?"}
+    B -- No --> C["Red validation panel<br/>submit blocked"]
+    C --> A
+    B -- Yes --> D["✨ Suggest assignment<br/>AI fills vehicle + driver"]
+    D --> E["Create draft trip"]
+    E --> F["Dispatch"]
+    F --> G["Toast: Van-05 → On Trip<br/>vehicle + driver → on_trip"]
+    G --> H["Complete:<br/>odometer + fuel + revenue"]
+    H --> I["Fuel log auto-created<br/>vehicle + driver → available"]
+    E --> J["Cancel → confirm<br/>→ shows in activity timeline"]
+```
+
+### Step-by-step checklist
+
+**Auth & RBAC**
+1. Visit `/` → redirects to `/login`; the live dispatch feed animates.
+2. Sign in as **Fleet Manager** → lands on `/dashboard`.
+3. Sign in as **Financial Analyst** → confirm Maintenance/Trips-actions are hidden but Expenses/Reports work.
+
+**Dashboard & AI**
+4. **Generate briefing** → severity-tagged items citing real reg numbers.
+5. Activity timeline shows real events with relative timestamps.
+6. Press **⌘K** → ask *"Which vehicle costs the most to run?"* → grounded streamed answer.
+
+**Vehicles**
+7. **Add Vehicle** → save; try a duplicate reg → friendly unique error. **Edit** one.
+8. Open a reg → drill-down → **Analyze** (AI Health Check).
+9. **Retire** → confirmation dialog → leaves the dispatch pool.
+
+**Drivers**
+10. Check red expired-license flag + amber <30-day flag. **Suspend** (confirm dialog) → **Reinstate**.
+
+**Trips (core)**
+11. Create a trip; set cargo above capacity → **live red validation** blocks submit.
+12. **✨ Suggest assignment** → auto-fills vehicle/driver + rationale.
+13. **Dispatch** → toast `→ On Trip`; verify vehicle/driver flipped on their pages.
+14. **Complete** (odometer + fuel + revenue) → auto fuel log. **Cancel** another → confirm dialog + shows in timeline.
+
+**Maintenance / Expenses / Reports / Settings / Search**
+15. **Open log** → vehicle → In Shop & gone from dispatch pool. **Close** → Available.
+16. Add a fuel log + expense → cost rollup updates.
+17. Reports charts render; **Generate AI Insights**; **Export CSV** downloads.
+18. `/settings` RBAC matrix renders. Topbar search `MH` returns results.
 
 ---
 
-## 🛠 Development Workflow
+## 📦 Deployment (Vercel + Neon)
 
-### 1. Feature Branch
-```bash
-git checkout -b feat/vehicle-management
-```
+1. **Initialize the DB** (once, from your machine, against the Neon URL Vercel will use):
+   ```bash
+   bunx prisma db push --schema=prisma/schema.prisma
+   bun run seed
+   ```
+2. Import the repo in Vercel (framework auto-detects Next.js).
+3. **Environment Variables** (Production + Preview): `DATABASE_URL` (pooled), `JWT_SECRET`, `GROQ_API_KEY`, `AI_BASE_URL`.
+4. **Build Command** → `prisma generate && next build` (the generated client lives in the gitignored `src/generated/`, so generate it at build time).
+5. Deploy. Set the Vercel **function region near your Neon region** to cut DB latency.
 
-### 2. Database Changes
-```bash
-# Edit prisma/schema.prisma
-bunx prisma migrate dev --name add-vehicle-field
-```
-
-### 3. API Layer
-- Create route handlers in `src/app/api/<feature>/route.ts`
-- Use Zod for request validation
-- Return consistent `{ success: boolean, data?, error? }` responses
-
-### 4. UI Layer
-- Use `DataTable` for lists
-- Use `Dialog` + `Form` for create/edit
-- Use `StatusBadge` for all status fields
-- Follow shadcn/ui patterns
-
-### 5. Lint & Build
-```bash
-bun run lint
-bun run build
-```
+> ⚠️ Vercel's build does **not** create tables or seed — that's step 1. If login returns a `PrismaClientKnownRequestError`, the DB Vercel points at hasn't been pushed/seeded.
 
 ---
 
-## 🎯 Hackathon Demo Script (Seeded Data)
-
-The seed script (`scripts/seed.ts`) creates:
-- **4 users** (admin, manager, dispatcher, viewer)
-- **8 vehicles** (mixed types: van, truck, etc.; statuses: active, in_shop, retired)
-- **6 drivers** (1 expired license, 1 suspended, 1 expiring in 20 days)
-- **5 trips** (various statuses: pending, in_progress, completed)
-- **3 maintenance logs**, **~12 fuel logs**, **~8 expenses**
-- **Revenue** on completed trips (ROI > 0)
-
-**Demo vehicle + driver for judge workflow:**
-- Vehicle: `Van-05` (500 kg capacity)
-- Driver: `Alex` (valid license)
-
-Run the full dispatch workflow live during demo.
-
----
-
-## 📦 Deployment (Vercel)
-
-1. Push to GitHub
-2. Import in Vercel
-3. Add environment variables:
-   - `DATABASE_URL` (Pooled connection string for serverless)
-   - `AUTH_SECRET`
-   - `AUTH_COOKIE_NAME`
-4. Deploy — `prisma generate` runs on `postinstall`
-
-> **Note:** Use a pooled connection string (PgBouncer) for serverless. Prisma + Next.js 15 works with `@prisma/adapter-pg`.
-
----
-
-## 🏛 Architecture Overview
-
-### High-Level Architecture
+## 📁 Project structure
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                              CLIENT (Browser)                                │
-│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────────────────┐  │
-│  │  React 19 RSC   │  │  Client Comp.   │  │  shadcn/ui + Tailwind v4    │  │
-│  │  (Server Comp.) │  │  ('use client') │  │  (Radix UI primitives)      │  │
-│  └────────┬────────┘  └────────┬────────┘  └─────────────────────────────┘  │
-│           │                    │                                             │
-│           ▼                    ▼                                             │
-│  ┌─────────────────────────────────────────────────────────────────────────┐ │
-│  │                    Next.js 15 App Router                                 │ │
-│  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────────┐ │ │
-│  │  │  Layouts    │  │  Pages      │  │  API Routes │  │  Middleware     │ │ │
-│  │  │  (Route     │  │  (RSC)      │  │  (Route     │  │  (Auth guard,   │ │ │
-│  │  │   Groups)   │  │             │  │   Handlers) │  │   Theme)        │ │ │
-│  │  └─────────────┘  └─────────────┘  └─────────────┘  └─────────────────┘ │ │
-│  └────────────────────────────────────┬────────────────────────────────────┘ │
-└───────────────────────────────────────│──────────────────────────────────────┘
-                                        │ HTTP / Server Actions
-                                        ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                            SERVER (Node.js / Bun)                            │
-│  ┌─────────────────────────────────────────────────────────────────────────┐ │
-│  │                         Prisma ORM Layer                                 │ │
-│  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────────┐ │ │
-│  │  │  User       │  │  Vehicle    │  │  Trip       │  │  MaintenanceLog │ │ │
-│  │  │  Driver     │  │  FuelLog    │  │  Expense    │  │  Revenue        │ │ │
-│  │  └─────────────┘  └─────────────┘  └─────────────┘  └─────────────────┘ │ │
-│  └────────────────────────────────────┬────────────────────────────────────┘ │
-│                                       │ Prisma Client                        │
-│                                       ▼                                    │
-│  ┌─────────────────────────────────────────────────────────────────────────┐ │
-│  │                    PostgreSQL (Neon / Supabase / Local)                 │ │
-│  │                    (Pooled via PgBouncer for serverless)                │ │
-│  └─────────────────────────────────────────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
-
-### Data Flow Patterns
-
-| Operation | Pattern | Example |
-|-----------|---------|---------|
-| **Reads (Lists/Details)** | Server Components → Prisma → DB | `page.tsx` → `getVehicles()` → `VehicleList` |
-| **Mutations** | Server Actions → Prisma → DB → `revalidatePath` | `dispatchTrip()` → `prisma.$transaction` → toast |
-| **Auth Checks** | Middleware + Server Action guards | `middleware.ts` + `requireRole()` in actions |
-| **Real-time feel** | Optimistic UI + Server Actions + `revalidatePath` | Status badge updates after dispatch |
-
-### Key Architectural Decisions
-
-1. **Server Components by Default** — All pages are RSC; client components only for interactivity (dialogs, toasts, theme toggle)
-2. **Server Actions for Mutations** — No separate API routes for CRUD; `use server` actions co-located with components
-3. **Route Groups for Auth** — `(app)` group wraps all protected routes with shared layout + middleware guard
-4. **Zod + Server Actions** — Validation at the action boundary; errors returned as typed objects, surfaced via `sonner` toasts
-5. **Prisma Singleton** — `src/lib/db.ts` exports a single `prisma` instance (prevents connection exhaustion in serverless)
-6. **Pooled Postgres Connection** — `DATABASE_URL` uses PgBouncer (Neon pooled) for serverless compatibility
-7. **Dark Mode Only** — `dark` class on `<html>`; no light mode toggle (hackathon time-saver + bonus feature claim)
-
-### Security Layers
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                    DEFENSE IN DEPTH                              │
-├─────────────────────────────────────────────────────────────────┤
-│  1. Middleware (Edge)      →  JWT verification, redirect login  │
-│  2. Server Actions         →  requireRole(['admin', 'manager']) │
-│  3. UI Layer               →  Hide nav/actions by role          │
-│  4. Database               →  RLS not used (single tenant)      │
-└─────────────────────────────────────────────────────────────────┘
+odoo-hackathon/
+├── prisma/schema.prisma        # 8 models, native enums (Prisma 7, driver adapter)
+├── scripts/seed.ts             # demo seed (bun run seed)
+├── src/
+│   ├── proxy.ts                # Next 16 middleware — JWT route guard
+│   ├── app/
+│   │   ├── layout.tsx          # root layout (fonts, Toaster)
+│   │   ├── page.tsx            # → redirects to /dashboard
+│   │   ├── not-found.tsx       # branded 404
+│   │   ├── login/              # login page + live ops panel + action
+│   │   ├── api/copilot/route.ts# streaming copilot endpoint
+│   │   └── (app)/              # authenticated shell (sidebar + topbar + copilot)
+│   │       ├── layout.tsx  error.tsx
+│   │       ├── dashboard/      # KPIs, AI briefing, activity timeline
+│   │       ├── vehicles/       # registry + [id] drill-down + AI health
+│   │       ├── drivers/  trips/  maintenance/  expenses/
+│   │       ├── reports/        # charts, AI insights, CSV export
+│   │       ├── settings/  search/
+│   │       └── actions.ts      # shared server actions (logout, etc.)
+│   ├── components/
+│   │   ├── ui/                 # shadcn/ui primitives
+│   │   └── app/                # sidebar, topbar, copilot, confirm-button, status-badge
+│   ├── lib/
+│   │   ├── auth.ts             # JWT sign/verify, getSession, requireRole
+│   │   ├── db.ts               # Prisma singleton (PrismaPg adapter)
+│   │   ├── dispatch-pool.ts    # eligible vehicles/drivers (UI + server share)
+│   │   ├── fleet-snapshot.ts   # live JSON snapshot for AI grounding
+│   │   ├── activity.ts         # unified activity timeline
+│   │   ├── dashboard.ts  reports.ts  status.ts  nav.ts
+│   └── generated/prisma/       # generated client (gitignored)
+├── DEMO.md                     # narrated video/demo script
+└── AGENTS.md / context.md      # build spec & AI-assistant instructions
 ```
 
 ---
 
-## 🤝 Team Conventions
+## 🏗 Key architectural decisions
 
-| Aspect | Convention |
-|--------|------------|
-| **Code style** | TypeScript strict, ESLint (Next.js config), Prettier via editor |
-| **Components** | shadcn/ui patterns, `class-variance-authority` for variants |
-| **State** | Server components by default; client components only when needed (`'use client'`) |
-| **Data fetching** | Server actions for mutations, RSC for reads |
-| **Validation** | Zod schemas in `src/lib/<feature>.ts` |
-| **Errors** | Toast notifications via `sonner` |
-| **Dark mode** | Only dark mode (Tailwind `dark` class on `<html>`) — counts as bonus feature |
-
----
-
-## 📚 Useful Commands
-
-```bash
-# Regenerate Prisma client after schema changes
-bunx prisma generate
-
-# Reset database & reseed (dev only)
-bunx prisma migrate reset --force && bun run seed
-
-# Check for TypeScript errors
-bunx tsc --noEmit
-
-# View bundle analysis
-ANALYZE=true bun run build
-```
+1. **Server Components by default**, client components only for interactivity (dialogs, copilot, forms).
+2. **Server Actions for all mutations** (no REST CRUD routes); validated with **Zod**, errors surfaced via `sonner` toasts, `revalidatePath` after writes.
+3. **Interactive transactions** (`prisma.$transaction`) for every multi-step business rule — status changes are atomic.
+4. **Shared dispatch-pool logic** so the UI dropdowns and the server-side re-check can't drift apart.
+5. **Custom JWT (no NextAuth)** — seeded credentials, httpOnly cookie, `proxy.ts` guard + `requireRole` in actions.
+6. **AI grounded via context injection, not RAG** — a compact live snapshot in the prompt.
+7. **Dark ops-console theme** with a monospace data treatment as the visual signature.
 
 ---
 
 ## 📝 License
 
-MIT — Hackathon project, use freely.
+MIT — hackathon project, use freely.
